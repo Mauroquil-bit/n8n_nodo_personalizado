@@ -1,1 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nodo Personalizado en N8N con IA</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #f97316;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --code-bg: #1e2530;
+      --green: #3fb950;
+      --blue: #58a6ff;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding-bottom: 60px;
+    }
+    header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 60%, #1a0a00 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 50px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 18px;
+    }
+    header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    header h1 span { color: var(--accent); }
+    header p { max-width: 620px; margin: 0 auto; color: var(--muted); font-size: 1.05rem; }
+    .container { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+    section { margin-top: 48px; }
+    section h2 {
+      font-size: 1.4rem; font-weight: 700; color: var(--text);
+      border-left: 4px solid var(--accent); padding-left: 14px; margin-bottom: 20px;
+    }
+    section h3 { font-size: 1.05rem; font-weight: 600; color: var(--blue); margin: 24px 0 10px; }
+    p { margin-bottom: 14px; color: #cdd5e0; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px; }
+    pre {
+      background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; overflow-x: auto; font-size: 0.875rem; line-height: 1.6; margin: 14px 0; position: relative;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.875em; color: #79c0ff; background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    }
+    pre code { padding: 0; background: transparent; color: #e6edf3; }
+    .lang-label { position: absolute; top: 8px; right: 14px; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .table-wrap { overflow-x: auto; margin: 14px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: #1c2333; color: var(--accent); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; color: #cdd5e0; }
+    tr:hover td { background: #1a2130; }
+    .steps { counter-reset: steps; list-style: none; padding: 0; }
+    .steps li {
+      counter-increment: steps; display: flex; gap: 16px; align-items: flex-start;
+      margin-bottom: 14px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px;
+    }
+    .steps li::before {
+      content: counter(steps); min-width: 30px; height: 30px; background: var(--accent);
+      color: #fff; font-weight: 800; font-size: 0.85rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    .prompt-box { background: #0b1120; border: 2px dashed var(--accent); border-radius: var(--radius); padding: 28px 24px; margin: 14px 0; }
+    .prompt-box .prompt-label { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .prompt-box pre { background: transparent; border: none; padding: 0; white-space: pre-wrap; word-break: break-word; color: #c9d1d9; }
+    .alert { display: flex; gap: 14px; align-items: flex-start; background: #1a1200; border: 1px solid #7c5400; border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 16px 20px; margin: 18px 0; }
+    .alert-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .alert-body { font-size: 0.92rem; color: #dba96a; }
+    .alert-body strong { color: #ffa94d; }
+    .ia-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-top: 14px; }
+    .ia-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; text-align: center; transition: border-color 0.2s, transform 0.15s; }
+    .ia-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .ia-card .ia-name { font-weight: 700; font-size: 1rem; margin-bottom: 6px; color: var(--text); }
+    .ia-card .ia-access { font-size: 0.78rem; color: var(--green); font-weight: 600; margin-bottom: 4px; }
+    .ia-card .ia-quality { font-size: 0.8rem; color: var(--muted); }
+    .ia-card a { font-size: 0.8rem; color: var(--blue); text-decoration: none; display: block; margin-top: 8px; }
+    .ia-card a:hover { text-decoration: underline; }
+    .tree { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.87rem; line-height: 1.8; white-space: pre; overflow-x: auto; }
+    .tree .dir { color: var(--accent); }
+    .tree .file { color: #a5d6ff; }
+    footer { margin-top: 60px; border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    @media (max-width: 600px) { header { padding: 40px 16px 36px; } .container { padding: 0 16px; } }
+  </style>
+</head>
+<body>
 
+<header>
+  <div class="hero-badge">Guia practica</div>
+  <h1>Construi tu <span>nodo N8N</span><br>personalizado con IA</h1>
+  <p>El prompt exacto, los pasos y los ejemplos para crear un community node desde cero sin saber TypeScript de antemano.</p>
+</header>
+
+<div class="container">
+
+  <section>
+    <p>Aca esta el prompt exacto (adaptado y generico) que use para construir mi nodo desde cero, junto con los pasos para que vos puedas hacer lo mismo.</p>
+    <p>No necesitas saber TypeScript de antemano. La IA genera el codigo. Tu trabajo es entender que queres conectar y como responde tu API.</p>
+  </section>
+
+  <section>
+    <h2>Requisitos previos</h2>
+    <h3>1. Instalar Node.js</h3>
+    <p>Descarga la version <strong>LTS</strong> (18.x o 20.x) desde: <a href="https://nodejs.org" target="_blank" rel="noopener" style="color:var(--blue)">nodejs.org</a></p>
+    <p>Verifica la instalacion abriendo una terminal:</p>
+    <pre><span class="lang-label">bash</span><code>node -v
+npm -v</code></pre>
+    <h3>2. Instalar N8N localmente</h3>
+    <pre><span class="lang-label">bash</span><code>npm install -g n8n
+n8n start</code></pre>
+    <p>Abri el navegador en <code>http://localhost:5678</code> y crea tu cuenta local.</p>
+    <div class="alert">
+      <div class="alert-icon">&#x26A0;&#xFE0F;</div>
+      <div class="alert-body">
+        <strong>PC corporativa con certificados SSL propios:</strong> arranca N8N asi:<br>
+        <code>NODE_TLS_REJECT_UNAUTHORIZED=0 n8n start</code>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Estructura de carpetas al final</h2>
+    <div class="tree"><span class="dir">n8n-nodes-[tu-nodo]/</span>
+&#x251C;&#x2500;&#x2500; <span class="dir">credentials/</span>
+&#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">[TuNodo]Credentials.ts</span>
+&#x251C;&#x2500;&#x2500; <span class="dir">nodes/</span>
+&#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">[TuNodo]/</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">[TuNodo].node.ts</span>
+&#x2502;       &#x2514;&#x2500;&#x2500; <span class="file">icon.svg</span>
+&#x251C;&#x2500;&#x2500; <span class="file">index.ts</span>
+&#x251C;&#x2500;&#x2500; <span class="file">package.json</span>
+&#x2514;&#x2500;&#x2500; <span class="file">tsconfig.json</span></div>
+  </section>
+
+  <section>
+    <h2>Como completar el prompt</h2>
+    <p>Antes de pegar el prompt en la IA, reemplaza cada placeholder con tus datos:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Placeholder</th><th>Descripcion</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td><code>[NOMBRE_PAQUETE]</code></td><td>Nombre npm del nodo</td><td><code>n8n-nodes-consulta-facturas</code></td></tr>
+          <tr><td><code>[NOMBRE_CLASE]</code></td><td>Nombre PascalCase del nodo</td><td><code>ConsultaFacturas</code></td></tr>
+          <tr><td><code>[DESCRIPCION_NODO]</code></td><td>Que hace el nodo en una oracion</td><td>Consulta el estado de una factura en el sistema</td></tr>
+          <tr><td><code>[URL_BASE_API]</code></td><td>URL base de tu API</td><td><code>https://api.miempresa.com</code></td></tr>
+          <tr><td><code>[RUTA_ENDPOINT]</code></td><td>Path del endpoint especifico</td><td><code>/v1/facturas/consultar</code></td></tr>
+          <tr><td><code>[METODO_HTTP]</code></td><td>Metodo HTTP</td><td><code>POST</code></td></tr>
+          <tr><td><code>[NOMBRE_HEADER_AUTH]</code></td><td>Header de autenticacion</td><td><code>apikey</code> o <code>Authorization</code></td></tr>
+          <tr><td><code>[PARAMETROS_ENTRADA]</code></td><td>Campos que ingresa el usuario</td><td>ver ejemplo abajo</td></tr>
+          <tr><td><code>[ESTRUCTURA_RESPUESTA_JSON]</code></td><td>Ejemplo real de respuesta de tu API</td><td>ver ejemplo abajo</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Ejemplo de <code>[PARAMETROS_ENTRADA]</code></h3>
+    <pre><code>- numero_factura: texto, requerido, "Numero de la factura a consultar"
+- ambiente: opciones (PROD / DEV), default PROD
+- api_key: texto enmascarado (password), requerido</code></pre>
+    <h3>Ejemplo de <code>[ESTRUCTURA_RESPUESTA_JSON]</code></h3>
+    <pre><span class="lang-label">json</span><code>{
+  "status": "OK",
+  "data": {
+    "factura": {
+      "numero": "F-001234",
+      "estado": "PAGADA",
+      "importe": 15000.00,
+      "fecha_vencimiento": "2025-03-15"
+    }
+  }
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>El Prompt</h2>
+    <p>Copia todo lo que esta dentro del recuadro y pegalo en tu IA:</p>
+    <div class="prompt-box">
+      <div class="prompt-label">&#x2500;&#x2500; INICIO DEL PROMPT &#x2500;&#x2500;</div>
+      <pre>Sos un experto en desarrollo de nodos personalizados para N8N (community nodes).
+Necesito que me ayudes a crear un nodo N8N desde cero con los siguientes datos.
+
+## Datos del nodo
+
+- Nombre del paquete npm: `[NOMBRE_PAQUETE]`
+- Nombre de la clase principal: `[NOMBRE_CLASE]`
+- Descripcion: [DESCRIPCION_NODO]
+
+## API a integrar
+
+- URL base: `[URL_BASE_API]`
+- Endpoint: `[RUTA_ENDPOINT]`
+- Metodo HTTP: `[METODO_HTTP]`
+- Autenticacion: header `[NOMBRE_HEADER_AUTH]` con un API Key como valor
+
+## Parametros que el usuario ingresa en N8N
+
+[PARAMETROS_ENTRADA]
+
+## Estructura de la respuesta JSON de la API
+
+[ESTRUCTURA_RESPUESTA_JSON]
+
+## Requisitos tecnicos obligatorios
+
+1. TypeScript estricto con interfaces para los tipos de request y response
+2. Sin dependencias externas - usar unicamente `this.helpers.httpRequest` de N8N
+3. Manejo de errores con `NodeOperationError` (importado de `n8n-workflow`)
+4. Soporte para `continueOnFail` - si falla un item, que el flujo pueda seguir
+5. Procesar multiples items en loop (batch processing con `this.getInputData()`)
+6. El API Key debe ser un parametro del nodo con `typeOptions: { password: true }` - NO usar Credentials de N8N
+7. Incluir un archivo SVG de icono generico (cuadrado 60x60)
+
+## Archivos que necesito que generes
+
+1. `package.json` completo con scripts `build` que incluya `tsc` y copia del SVG con `copyfiles`
+2. `tsconfig.json`
+3. `index.ts` con exports del nodo y la credential
+4. `credentials/[NOMBRE_CLASE]Credentials.ts`
+5. `nodes/[NOMBRE_CLASE]/[NOMBRE_CLASE].node.ts` con toda la logica
+6. `nodes/[NOMBRE_CLASE]/icon.svg` (SVG generico)
+7. Comandos para hacer el build e instalar el nodo en N8N local
+
+Por favor genera todos los archivos con el codigo completo, explica brevemente las secciones clave del nodo principal, y al final dime como verificar que el nodo aparece y funciona en N8N.</pre>
+      <div class="prompt-label" style="margin-top:14px">&#x2500;&#x2500; FIN DEL PROMPT &#x2500;&#x2500;</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Con que IAs podes usar este prompt</h2>
+    <div class="ia-grid">
+      <div class="ia-card">
+        <div class="ia-name">ChatGPT GPT-4o</div>
+        <div class="ia-access">Gratis con limite diario</div>
+        <div class="ia-quality">Muy buena calidad</div>
+        <a href="https://chat.openai.com" target="_blank" rel="noopener">chat.openai.com &#x2192;</a>
+      </div>
+      <div class="ia-card">
+        <div class="ia-name">Google Gemini</div>
+        <div class="ia-access">Gratis</div>
+        <div class="ia-quality">Buena, contexto largo</div>
+        <a href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com &#x2192;</a>
+      </div>
+      <div class="ia-card">
+        <div class="ia-name">Copilot Microsoft</div>
+        <div class="ia-access">Gratis en Windows/Edge</div>
+        <div class="ia-quality">Buena</div>
+        <a href="https://copilot.microsoft.com" target="_blank" rel="noopener">copilot.microsoft.com &#x2192;</a>
+      </div>
+      <div class="ia-card">
+        <div class="ia-name">Claude.ai</div>
+        <div class="ia-access">Plan Pro (pago)</div>
+        <div class="ia-quality">Excelente para codigo</div>
+        <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai &#x2192;</a>
+      </div>
+    </div>
+    <h3>Como iterar cuando algo no funciona</h3>
+    <p>El proceso no es "pegas el prompt y funciona todo". Es una conversacion:</p>
+    <ul class="steps">
+      <li>Pegas el prompt &#x2192; la IA genera los archivos.</li>
+      <li>Copias los archivos y ejecutas <code>npm run build</code>.</li>
+      <li>Si hay errores de TypeScript &#x2192; copias el error completo y se lo mandas a la misma IA.</li>
+      <li>Si el nodo no aparece en N8N &#x2192; le pedis que revise el <code>package.json</code> (el campo <code>n8n.nodes</code> debe estar presente).</li>
+      <li>Si la API responde con un formato diferente &#x2192; pegas la respuesta real y pedis que adapte el codigo.</li>
+    </ul>
+    <p>Cada correccion es aprendizaje. Despues de 3 o 4 iteraciones ya entendes la estructura y podes modificar solo.</p>
+  </section>
+
+  <section>
+    <h2>Build e instalacion del nodo</h2>
+    <p>Una vez que tenes los archivos generados por la IA:</p>
+    <pre><span class="lang-label">bash</span><code># Dentro de la carpeta del nodo
+npm install
+npm run build
+
+# Instalar en N8N local
+cd ~/.n8n/custom/
+npm install /ruta/completa/a/tu-nodo/
+
+# Reiniciar N8N
+n8n start</code></pre>
+    <p>Abri <code>http://localhost:5678</code>, crea un flujo nuevo y busca el nombre de tu nodo en el panel. Si aparece, esta instalado correctamente.</p>
+  </section>
+
+  <section>
+    <h2>Problema frecuente: pantalla blanca</h2>
+    <div class="card">
+      <p><strong>Sintoma:</strong> abris el nodo en el canvas y la pantalla se pone blanca o el panel no carga.</p>
+      <p><strong>Causa:</strong> un bug en N8N 2.x con el sistema de Credentials cuando el nodo intenta acceder a ellas.</p>
+      <p style="margin-bottom:0"><strong>Solucion:</strong> no usar Credentials de N8N. En cambio, agrega el API Key directamente como parametro del nodo con <code>typeOptions: { password: true }</code> - el valor queda enmascarado en la UI pero se puede ingresar sin problema. El prompt ya incluye esta instruccion.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p>Cualquier duda, abri un issue en el <a href="https://github.com/Mauroquil-bit/n8n_nodo_personalizado" target="_blank" rel="noopener">repositorio</a>. Suerte con tu nodo. &#x1F680;</p>
+</footer>
+
+</body>
+</html>
