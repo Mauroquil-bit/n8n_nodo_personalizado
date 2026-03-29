@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nodo Personalizado N8N con IA</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --n8n-orange: #FF6D5A;
+      --n8n-orange-dark: #e8503d;
+      --bg-dark: #0f1117;
+      --bg-card: #1a1d27;
+      --bg-card2: #20243a;
+      --bg-sidebar: #13151f;
+      --border: #2a2d3e;
+      --text: #e2e8f0;
+      --text-muted: #8892a4;
+      --text-heading: #f7fafc;
+      --code-bg: #0d1117;
+      --code-border: #30363d;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --sidebar-width: 260px;
+      --header-height: 64px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--n8n-orange); }
+
+    /* ===== HEADER ===== */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--header-height);
+      background: rgba(15,17,23,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .header-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 700; color: var(--text-heading);
+      text-decoration: none;
+    }
+    .header-logo .logo-icon {
+      width: 36px; height: 36px; background: var(--n8n-orange);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; color: #fff; flex-shrink: 0;
+    }
+    .header-subtitle {
+      color: var(--text-muted); font-size: 0.85rem;
+      border-left: 1px solid var(--border); padding-left: 16px; margin-left: 4px;
+    }
+    .hamburger {
+      display: none; background: none; border: none; cursor: pointer;
+      color: var(--text); font-size: 1.4rem; margin-left: auto;
+      padding: 4px 8px;
+    }
+
+    /* ===== LAYOUT ===== */
+    .layout {
+      display: flex;
+      padding-top: var(--header-height);
+      min-height: 100vh;
+    }
+
+    /* ===== SIDEBAR ===== */
+    nav.sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: var(--header-height);
+      bottom: 0;
+      left: 0;
+      overflow-y: auto;
+      padding: 24px 0 32px;
+      transition: transform 0.3s ease;
+      z-index: 50;
+    }
+    .sidebar-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 0 20px 8px; margin-bottom: 4px;
+    }
+    .sidebar a {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 20px; text-decoration: none;
+      color: var(--text-muted); font-size: 0.875rem;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+    .sidebar a:hover { color: var(--text); background: rgba(255,109,90,0.06); }
+    .sidebar a.active {
+      color: var(--n8n-orange); border-left-color: var(--n8n-orange);
+      background: rgba(255,109,90,0.08);
+    }
+    .sidebar a .nav-num {
+      font-size: 0.75rem; font-weight: 700; color: var(--n8n-orange);
+      opacity: 0.7; min-width: 18px; margin-top: 1px;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 40px 48px 80px;
+      max-width: calc(100% - var(--sidebar-width));
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #20243a 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(255,109,90,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; bottom: -40px; left: 40%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(88,166,255,0.05) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,109,90,0.15); color: var(--n8n-orange);
+      border: 1px solid rgba(255,109,90,0.3);
+      border-radius: 20px; padding: 4px 14px; font-size: 0.8rem;
+      font-weight: 600; margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800;
+      color: var(--text-heading); line-height: 1.25; margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--n8n-orange); }
+    .hero p {
+      font-size: 1.05rem; color: var(--text-muted); max-width: 600px; line-height: 1.8;
+    }
+    .hero-stats {
+      display: flex; gap: 32px; margin-top: 32px; flex-wrap: wrap;
+    }
+    .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+    .hero-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--n8n-orange); }
+    .hero-stat .lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ===== SECTIONS ===== */
+    section {
+      margin-bottom: 56px;
+      scroll-margin-top: calc(var(--header-height) + 24px);
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+    }
+    .section-num {
+      width: 36px; height: 36px; background: rgba(255,109,90,0.15);
+      border: 1px solid rgba(255,109,90,0.3); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 800; color: var(--n8n-orange);
+      flex-shrink: 0;
+    }
+    h2 {
+      font-size: 1.4rem; font-weight: 700; color: var(--text-heading);
+    }
+    h3 {
+      font-size: 1.1rem; font-weight: 600; color: var(--text-heading);
+      margin: 24px 0 12px;
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 16px; }
+    li { margin-bottom: 8px; }
+    a { color: var(--accent-blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-heading); font-weight: 600; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px; margin-bottom: 20px;
+    }
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .step-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--n8n-orange); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
+    }
+
+    /* ===== CODE BLOCKS ===== */
+    .code-wrapper {
+      position: relative;
+      margin: 16px 0;
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #161b22; border: 1px solid var(--code-border);
+      border-bottom: none; border-radius: 8px 8px 0 0;
+      padding: 8px 16px;
+    }
+    .code-lang {
+      font-size: 0.75rem; color: var(--text-muted);
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .copy-btn {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted); border-radius: 5px;
+      padding: 3px 10px; font-size: 0.75rem; cursor: pointer;
+      transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+      font-family: inherit;
+    }
+    .copy-btn:hover { background: rgba(255,109,90,0.1); color: var(--n8n-orange); border-color: rgba(255,109,90,0.3); }
+    .copy-btn.copied { background: rgba(63,185,80,0.1); color: var(--accent-green); border-color: rgba(63,185,80,0.3); }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      tab-size: 2;
+    }
+    code {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      color: #e6edf3;
+    }
+    p code, li code {
+      background: rgba(110,118,129,0.15);
+      border: 1px solid rgba(110,118,129,0.3);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.85em;
+      color: #79c0ff;
+    }
+
+    /* ===== TABLES ===== */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin: 16px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    thead tr { background: var(--bg-card2); }
+    th {
+      padding: 12px 16px; text-align: left;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(42,45,62,0.5);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,109,90,0.03); }
+    td code {
+      background: rgba(110,118,129,0.15);
+      border: 1px solid rgba(110,118,129,0.3);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.82em;
+      color: #79c0ff;
+      white-space: nowrap;
+    }
+
+    /* ===== PROMPT SECTION ===== */
+    .prompt-box {
+      background: linear-gradient(135deg, #16192a 0%, #1c1f30 100%);
+      border: 2px solid rgba(255,109,90,0.4);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(255,109,90,0.08);
+    }
+    .prompt-box-header {
+      background: rgba(255,109,90,0.1);
+      border-bottom: 1px solid rgba(255,109,90,0.25);
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .prompt-box-title {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; color: var(--n8n-orange); font-size: 1rem;
+    }
+    .prompt-box-title .icon { font-size: 1.2rem; }
+    .prompt-hint { font-size: 0.8rem; color: var(--text-muted); }
+    .copy-prompt-btn {
+      background: var(--n8n-orange); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 10px 22px; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: all 0.2s; font-family: inherit;
+      box-shadow: 0 4px 12px rgba(255,109,90,0.3);
+    }
+    .copy-prompt-btn:hover { background: var(--n8n-orange-dark); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(255,109,90,0.4); }
+    .copy-prompt-btn:active { transform: translateY(0); }
+    .copy-prompt-btn.copied { background: var(--accent-green); box-shadow: 0 4px 12px rgba(63,185,80,0.3); }
+    .prompt-content {
+      padding: 24px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.85rem; line-height: 1.75;
+      color: #c9d1d9; white-space: pre-wrap; word-break: break-word;
+    }
+    .prompt-delimiter {
+      color: var(--n8n-orange); font-weight: 700;
+    }
+    .prompt-placeholder {
+      color: #58a6ff;
+    }
+    .prompt-heading {
+      color: #d2a8ff; font-weight: 700;
+    }
+    .prompt-marker {
+      color: var(--accent-green);
+    }
+    .prompt-code-block {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #79c0ff;
+    }
+
+    /* ===== CALLOUT / ALERT ===== */
+    .callout {
+      display: flex; gap: 14px; align-items: flex-start;
+      border-radius: 10px; padding: 16px 20px; margin: 16px 0;
+    }
+    .callout-info { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); }
+    .callout-warn { background: rgba(255,171,0,0.08); border: 1px solid rgba(255,171,0,0.25); }
+    .callout-danger { background: rgba(255,109,90,0.08); border: 1px solid rgba(255,109,90,0.25); }
+    .callout-success { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.25); }
+    .callout-icon { font-size: 1.2rem; flex-shrink: 0; line-height: 1.5; }
+    .callout-body { font-size: 0.9rem; }
+    .callout-body strong { display: block; margin-bottom: 4px; font-size: 0.95rem; }
+
+    /* ===== FOLDER TREE ===== */
+    .tree-line { color: #8b949e; }
+    .tree-dir { color: #79c0ff; font-weight: 600; }
+    .tree-file { color: #e6edf3; }
+    .tree-ts { color: #3fb950; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: var(--bg-sidebar);
+      border-top: 1px solid var(--border);
+      margin-left: var(--sidebar-width);
+      padding: 28px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-left { color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; }
+    .footer-left a { color: var(--n8n-orange); font-weight: 600; }
+    .footer-right a {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px;
+      padding: 8px 18px; font-size: 0.85rem; font-weight: 600;
+      transition: all 0.2s; text-decoration: none;
+    }
+    .footer-right a:hover { border-color: var(--n8n-orange); color: var(--n8n-orange); }
+    .github-icon { width: 18px; height: 18px; fill: currentColor; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      nav.sidebar {
+        transform: translateX(-100%);
+      }
+      nav.sidebar.open {
+        transform: translateX(0);
+      }
+      main { margin-left: 0; max-width: 100%; padding: 24px 20px 60px; }
+      footer { margin-left: 0; padding: 20px; }
+      .hamburger { display: block; }
+      .hero { padding: 32px 24px; }
+      .overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.6); z-index: 40;
+      }
+      .overlay.show { display: block; }
+    }
+    @media (max-width: 600px) {
+      .hero-stats { gap: 20px; }
+      table { font-size: 0.8rem; }
+      th, td { padding: 9px 12px; }
+      main { padding: 20px 16px 60px; }
+      .prompt-content { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- OVERLAY for mobile sidebar -->
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- HEADER -->
+<header>
+  <a href="#intro" class="header-logo">
+    <div class="logo-icon">N</div>
+    <span>N8N Custom Node</span>
+  </a>
+  <span class="header-subtitle">Guía con IA</span>
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">☰</button>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Contenido</div>
+  <a href="#intro" class="active"><span class="nav-num">01</span>Introducción</a>
+  <a href="#requisitos"><span class="nav-num">02</span>Requisitos previos</a>
+  <a href="#estructura"><span class="nav-num">03</span>Estructura de carpetas</a>
+  <a href="#placeholders"><span class="nav-num">04</span>Cómo completar el prompt</a>
+  <a href="#el-prompt"><span class="nav-num">05</span>EL PROMPT</a>
+  <a href="#ias"><span class="nav-num">06</span>IAs compatibles</a>
+  <a href="#iterar"><span class="nav-num">07</span>Cómo iterar</a>
+  <a href="#build"><span class="nav-num">08</span>Build e instalación</a>
+  <a href="#problema"><span class="nav-num">09</span>Pantalla blanca</a>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <main>
+
+    <!-- HERO -->
+    <div class="hero" id="intro">
+      <div class="hero-badge">🔌 Community Nodes · N8N</div>
+      <h1>Construí tu <span>nodo personalizado</span><br>en N8N con IA</h1>
+      <p>
+        No necesitás saber TypeScript de antemano. La IA genera el código.
+        Tu trabajo es entender qué querés conectar y cómo responde tu API.
+        Esta guía te lleva paso a paso.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="val">9</span><span class="lbl">Secciones</span></div>
+        <div class="hero-stat"><span class="val">1</span><span class="lbl">Prompt listo</span></div>
+        <div class="hero-stat"><span class="val">4</span><span class="lbl">IAs compatibles</span></div>
+        <div class="hero-stat"><span class="val">0</span><span class="lbl">TS requerido</span></div>
+      </div>
+    </div>
+
+    <!-- ===== 01 REQUISITOS ===== -->
+    <section id="requisitos">
+      <div class="section-header">
+        <div class="section-num">02</div>
+        <h2>Requisitos previos</h2>
+      </div>
+
+      <h3>1. Instalar Node.js</h3>
+      <p>Descargá la versión <strong>LTS (18.x o 20.x)</strong> desde:<br>
+        👉 <a href="https://nodejs.org" target="_blank" rel="noopener">https://nodejs.org</a>
+      </p>
+      <p>Verificá la instalación abriendo una terminal:</p>
+
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+        </div>
+        <pre><code>node -v
+npm -v</code></pre>
+      </div>
+
+      <h3>2. Instalar N8N localmente</h3>
+
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+        </div>
+        <pre><code>npm install -g n8n
+n8n start</code></pre>
+      </div>
+
+      <p>Abrí el navegador en <code>http://localhost:5678</code> y creá tu cuenta local.</p>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body">
+          <strong>PC corporativa con certificados SSL propios</strong>
+          Si usás una PC corporativa, arrancá N8N así:
+          <div class="code-wrapper" style="margin-top: 10px;">
+            <div class="code-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+            </div>
+            <pre><code>NODE_TLS_REJECT_UNAUTHORIZED=0 n8n start</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 03 ESTRUCTURA ===== -->
+    <section id="estructura">
+      <div class="section-header">
+        <div class="section-num">03</div>
+        <h2>Estructura de carpetas al final</h2>
+      </div>
+
+      <p>Al terminar el proceso, tu proyecto tendrá esta estructura:</p>
+
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">árbol de carpetas</span>
+          <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+        </div>
+        <pre><code><span class="tree-dir">n8n-nodes-[tu-nodo]/</span>
+<span class="tree-line">├── </span><span class="tree-dir">credentials/</span>
+<span class="tree-line">│   └── </span><span class="tree-ts">[TuNodo]Credentials.ts</span>
+<span class="tree-line">├── </span><span class="tree-dir">nodes/</span>
+<span class="tree-line">│   └── </span><span class="tree-dir">[TuNodo]/</span>
+<span class="tree-line">│       ├── </span><span class="tree-ts">[TuNodo].node.ts</span>
+<span class="tree-line">│       └── </span><span class="tree-file">icon.svg</span>
+<span class="tree-line">├── </span><span class="tree-ts">index.ts</span>
+<span class="tree-line">├── </span><span class="tree-file">package.json</span>
+<span class="tree-line">└── </span><span class="tree-file">tsconfig.json</span></code></pre>
+      </div>
+    </section>
+
+    <!-- ===== 04 PLACEHOLDERS ===== -->
+    <section id="placeholders">
+      <div class="section-header">
+        <div class="section-num">04</div>
+        <h2>Cómo completar el prompt</h2>
+      </div>
+
+      <p>Antes de pegar el prompt en la IA, reemplazá cada placeholder con tus datos:</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Placeholder</th>
+              <th>Descripción</th>
+              <th>Ejemplo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[NOMBRE_PAQUETE]</code></td>
+              <td>Nombre npm del nodo</td>
+              <td><code>n8n-nodes-consulta-facturas</code></td>
+            </tr>
+            <tr>
+              <td><code>[NOMBRE_CLASE]</code></td>
+              <td>Nombre PascalCase del nodo</td>
+              <td><code>ConsultaFacturas</code></td>
+            </tr>
+            <tr>
+              <td><code>[DESCRIPCION_NODO]</code></td>
+              <td>Qué hace el nodo en una oración</td>
+              <td>Consulta el estado de una factura en el sistema de facturación</td>
+            </tr>
+            <tr>
+              <td><code>[URL_BASE_API]</code></td>
+              <td>URL base de tu API</td>
+              <td><code>https://api.miempresa.com</code></td>
+            </tr>
+            <tr>
+              <td><code>[RUTA_ENDPOINT]</code></td>
+              <td>Path del endpoint específico</td>
+              <td><code>/v1/facturas/consultar</code></td>
+            </tr>
+            <tr>
+              <td><code>[METODO_HTTP]</code></td>
+              <td>Método HTTP</td>
+              <td><code>POST</code></td>
+            </tr>
+            <tr>
+              <td><code>[NOMBRE_HEADER_AUTH]</code></td>
+              <td>Header de autenticación</td>
+              <td><code>apikey</code> o <code>Authorization</code></td>
+            </tr>
+            <tr>
+              <td><code>[PARAMETROS_ENTRADA]</code></td>
+              <td>Lista de campos que ingresa el usuario</td>
+              <td>Ver ejemplo abajo ↓</td>
+            </tr>
+            <tr>
+              <td><code>[ESTRUCTURA_RESPUESTA_JSON]</code></td>
+              <td>Ejemplo real de respuesta de tu API</td>
+              <td>Ver ejemplo abajo ↓</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Ejemplo de <code>[PARAMETROS_ENTRADA]</code></h3>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">texto</span>
+          <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+        </div>
+        <pre><code>- numero_factura: texto, requerido, "Número de la factura a consultar"
+- ambiente: opciones (PROD / DEV), default PROD
+- api_key: texto enmascarado (password), requerido</code></pre>
+      </div>
+
+      <h3>Ejemplo de <code>[ESTRUCTURA_RESPUESTA_JSON]</code></h3>
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">json</span>
+          <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+        </div>
+        <pre><code>{
+  "status": "OK",
+  "data": {
+    "factura": {
+      "numero": "F-001234",
+      "estado": "PAGADA",
+      "importe": 15000.00,
+      "fecha_vencimiento": "2025-03-15"
+    }
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- ===== 05 EL PROMPT ===== -->
+    <section id="el-prompt">
+      <div class="section-header">
+        <div class="section-num">05</div>
+        <h2>EL PROMPT</h2>
+      </div>
+
+      <p>Copiá todo el texto entre <code>---INICIO---</code> y <code>---FIN---</code> y pegalo en tu IA preferida:</p>
+
+      <div class="prompt-box">
+        <div class="prompt-box-header">
+          <div class="prompt-box-title">
+            <span class="icon">🤖</span>
+            Prompt completo para N8N Custom Node
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+            <button class="copy-prompt-btn" id="copyPromptBtn" onclick="copyPrompt()">
+              📋 Copiar Prompt
+            </button>
+            <span class="prompt-hint">Solo se copia el texto entre ---INICIO--- y ---FIN---</span>
+          </div>
+        </div>
+        <div class="prompt-content" id="promptDisplay"><span class="prompt-delimiter">---INICIO---</span>
+
+Sos un experto en desarrollo de nodos personalizados para N8N (community nodes).
+Necesito que me ayudes a crear un nodo N8N desde cero con los siguientes datos.
+
+<span class="prompt-heading">## Datos del nodo</span>
+
+- Nombre del paquete npm: <span class="prompt-code-block">`[NOMBRE_PAQUETE]`</span>
+- Nombre de la clase principal: <span class="prompt-code-block">`[NOMBRE_CLASE]`</span>
+- Descripción: <span class="prompt-placeholder">[DESCRIPCION_NODO]</span>
+
+<span class="prompt-heading">## API a integrar</span>
+
+- URL base: <span class="prompt-code-block">`[URL_BASE_API]`</span>
+- Endpoint: <span class="prompt-code-block">`[RUTA_ENDPOINT]`</span>
+- Método HTTP: <span class="prompt-code-block">`[METODO_HTTP]`</span>
+- Autenticación: header <span class="prompt-code-block">`[NOMBRE_HEADER_AUTH]`</span> con un API Key como valor
+
+<span class="prompt-heading">## Parámetros que el usuario ingresa en N8N</span>
+
+<span class="prompt-placeholder">[PARAMETROS_ENTRADA]</span>
+
+<span class="prompt-heading">## Estructura de la respuesta JSON de la API</span>
+
+<span class="prompt-marker">```json</span>
+<span class="prompt-placeholder">[ESTRUCTURA_RESPUESTA_JSON]</span>
+<span class="prompt-marker">```</span>
+
+<span class="prompt-heading">## Requisitos técnicos obligatorios</span>
+
+1. TypeScript estricto con interfaces para los tipos de request y response
+2. Sin dependencias externas — usar únicamente <span class="prompt-code-block">`this.helpers.httpRequest`</span> de N8N
+3. Manejo de errores con <span class="prompt-code-block">`NodeOperationError`</span> (importado de <span class="prompt-code-block">`n8n-workflow`</span>)
+4. Soporte para <span class="prompt-code-block">`continueOnFail`</span> — si falla un item, que el flujo pueda seguir
+5. Procesar múltiples items en loop (batch processing con <span class="prompt-code-block">`this.getInputData()`</span>)
+6. El API Key debe ser un parámetro del nodo con <span class="prompt-code-block">`typeOptions: { password: true }`</span> — NO usar el sistema de Credentials de N8N (tiene un bug conocido en versiones 2.x que genera pantalla blanca)
+7. Incluir un archivo SVG de icono genérico (cuadrado 60x60)
+
+<span class="prompt-heading">## Archivos que necesito que generes</span>
+
+1. <span class="prompt-code-block">`package.json`</span> completo con scripts <span class="prompt-code-block">`build`</span> que incluya <span class="prompt-code-block">`tsc`</span> y copia del SVG con <span class="prompt-code-block">`copyfiles`</span>
+2. <span class="prompt-code-block">`tsconfig.json`</span>
+3. <span class="prompt-code-block">`index.ts`</span> con exports del nodo y la credential
+4. <span class="prompt-code-block">`credentials/[NOMBRE_CLASE]Credentials.ts`</span>
+5. <span class="prompt-code-block">`nodes/[NOMBRE_CLASE]/[NOMBRE_CLASE].node.ts`</span> con toda la lógica
+6. <span class="prompt-code-block">`nodes/[NOMBRE_CLASE]/icon.svg`</span> (SVG genérico)
+7. Comandos para hacer el build e instalar el nodo en N8N local
+
+Por favor generá todos los archivos con el código completo, explicá brevemente las secciones clave del nodo principal, y al final decime cómo verificar que el nodo aparece y funciona en N8N.
+
+<span class="prompt-delimiter">---FIN---</span></div>
+      </div>
+    </section>
+
+    <!-- ===== 06 IAs ===== -->
+    <section id="ias">
+      <div class="section-header">
+        <div class="section-num">06</div>
+        <h2>Con qué IAs podés usar este prompt</h2>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>IA</th>
+              <th>Acceso</th>
+              <th>Calidad</th>
+              <th>Cómo usarla</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ChatGPT (GPT-4o)</strong></td>
+              <td>Gratis con límite diario</td>
+              <td>⭐⭐⭐⭐ Muy buena</td>
+              <td><a href="https://chat.openai.com" target="_blank" rel="noopener">chat.openai.com</a></td>
+            </tr>
+            <tr>
+              <td><strong>Google Gemini</strong></td>
+              <td>Gratis</td>
+              <td>⭐⭐⭐ Buena, contexto largo</td>
+              <td><a href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com</a></td>
+            </tr>
+            <tr>
+              <td><strong>Copilot (Microsoft)</strong></td>
+              <td>Gratis en Windows/Edge</td>
+              <td>⭐⭐⭐ Buena</td>
+              <td><a href="https://copilot.microsoft.com" target="_blank" rel="noopener">copilot.microsoft.com</a></td>
+            </tr>
+            <tr>
+              <td><strong>Claude.ai</strong></td>
+              <td>Pago (plan Pro)</td>
+              <td>⭐⭐⭐⭐⭐ Excelente para código</td>
+              <td><a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== 07 ITERAR ===== -->
+    <section id="iterar">
+      <div class="section-header">
+        <div class="section-num">07</div>
+        <h2>Cómo iterar cuando algo no funciona</h2>
+      </div>
+
+      <p>El proceso no es "pegás el prompt y funciona todo". Es una <strong>conversación</strong>:</p>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div>Pegás el prompt → la IA genera los archivos</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div>Copiás los archivos, ejecutás <code>npm run build</code></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div>
+            Si hay errores de TypeScript → copiás el error completo y se lo mandás a la misma IA:<br>
+            <em style="color:var(--text-muted); font-size:0.9rem;">"Tuve este error al compilar, ayudame a corregirlo: [pegar error]"</em>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div>Si el nodo no aparece en N8N → le pedís que revise el <code>package.json</code> (el campo <code>n8n.nodes</code> debe estar)</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">5</div>
+          <div>Si la API responde con un formato diferente al que esperabas → pegás la respuesta real y pedís que adapte el código</div>
+        </div>
+      </div>
+
+      <div class="callout callout-success" style="margin-top: 24px;">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body">
+          Cada corrección es aprendizaje. Después de 3 o 4 iteraciones ya entendés la estructura y podés modificar solo.
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 08 BUILD ===== -->
+    <section id="build">
+      <div class="section-header">
+        <div class="section-num">08</div>
+        <h2>Build e instalación del nodo</h2>
+      </div>
+
+      <p>Una vez que tenés los archivos generados por la IA:</p>
+
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">📋 Copiar</button>
+        </div>
+        <pre><code># Dentro de la carpeta del nodo
+npm install
+npm run build
+
+# Instalar en N8N local
+cd ~/.n8n/custom/
+npm install /ruta/completa/a/tu-nodo/
+
+# Reiniciar N8N
+n8n start</code></pre>
+      </div>
+
+      <p>Abrí <code>http://localhost:5678</code>, creá un flujo nuevo y buscá el nombre de tu nodo en el panel de nodos. Si aparece, está instalado correctamente. ✅</p>
+    </section>
+
+    <!-- ===== 09 PANTALLA BLANCA ===== -->
+    <section id="problema">
+      <div class="section-header">
+        <div class="section-num">09</div>
+        <h2>Problema frecuente: pantalla blanca</h2>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3 style="margin-top:0; color:#FF6D5A;">🩺 Síntoma</h3>
+          <p style="color:var(--text-muted); margin:0;">Abrís el nodo en el canvas y la pantalla se pone blanca o el panel no carga.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0; color:#ffab00;">⚙️ Causa</h3>
+          <p style="color:var(--text-muted); margin:0;">Un bug en N8N 2.x con el sistema de Credentials cuando el nodo intenta acceder a ellas.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-success">
+        <span class="callout-icon">✅</span>
+        <div class="callout-body">
+          <strong>Solución</strong>
+          No usar Credentials de N8N. En cambio, agregar el API Key directamente como parámetro del nodo con <code>typeOptions: { password: true }</code> — el valor queda enmascarado en la UI pero se puede ingresar sin problema.
+          <br><br>
+          <strong>El prompt ya incluye esta instrucción.</strong> No necesitás hacer nada extra.
+        </div>
+      </div>
+
+      <div class="callout callout-info" style="margin-top:20px;">
+        <span class="callout-icon">💬</span>
+        <div class="callout-body">
+          Cualquier duda, abrí un issue en el repositorio o respondé en la discusión. ¡Suerte con tu nodo!
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    Creado con ❤️ por <a href="https://github.com/Mauroquil-bit" target="_blank" rel="noopener">Mauroquil-bit</a><br>
+    <span style="font-size:0.8rem;">Guía práctica para construir nodos N8N con ayuda de IAs</span>
+  </div>
+  <div class="footer-right">
+    <a href="https://github.com/Mauroquil-bit/n8n_nodo_personalizado" target="_blank" rel="noopener">
+      <svg class="github-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      Ver en GitHub
+    </a>
+  </div>
+</footer>
+
+<script>
+  /* ===== PROMPT TEXT (plain, for copying) ===== */
+  const PROMPT_TEXT = `Sos un experto en desarrollo de nodos personalizados para N8N (community nodes).
+Necesito que me ayudes a crear un nodo N8N desde cero con los siguientes datos.
+
+## Datos del nodo
+
+- Nombre del paquete npm: \`[NOMBRE_PAQUETE]\`
+- Nombre de la clase principal: \`[NOMBRE_CLASE]\`
+- Descripción: [DESCRIPCION_NODO]
+
+## API a integrar
+
+- URL base: \`[URL_BASE_API]\`
+- Endpoint: \`[RUTA_ENDPOINT]\`
+- Método HTTP: \`[METODO_HTTP]\`
+- Autenticación: header \`[NOMBRE_HEADER_AUTH]\` con un API Key como valor
+
+## Parámetros que el usuario ingresa en N8N
+
+[PARAMETROS_ENTRADA]
+
+## Estructura de la respuesta JSON de la API
+
+\`\`\`json
+[ESTRUCTURA_RESPUESTA_JSON]
+\`\`\`
+
+## Requisitos técnicos obligatorios
+
+1. TypeScript estricto con interfaces para los tipos de request y response
+2. Sin dependencias externas — usar únicamente \`this.helpers.httpRequest\` de N8N
+3. Manejo de errores con \`NodeOperationError\` (importado de \`n8n-workflow\`)
+4. Soporte para \`continueOnFail\` — si falla un item, que el flujo pueda seguir
+5. Procesar múltiples items en loop (batch processing con \`this.getInputData()\`)
+6. El API Key debe ser un parámetro del nodo con \`typeOptions: { password: true }\` — NO usar el sistema de Credentials de N8N (tiene un bug conocido en versiones 2.x que genera pantalla blanca)
+7. Incluir un archivo SVG de icono genérico (cuadrado 60x60)
+
+## Archivos que necesito que generes
+
+1. \`package.json\` completo con scripts \`build\` que incluya \`tsc\` y copia del SVG con \`copyfiles\`
+2. \`tsconfig.json\`
+3. \`index.ts\` con exports del nodo y la credential
+4. \`credentials/[NOMBRE_CLASE]Credentials.ts\`
+5. \`nodes/[NOMBRE_CLASE]/[NOMBRE_CLASE].node.ts\` con toda la lógica
+6. \`nodes/[NOMBRE_CLASE]/icon.svg\` (SVG genérico)
+7. Comandos para hacer el build e instalar el nodo en N8N local
+
+Por favor generá todos los archivos con el código completo, explicá brevemente las secciones clave del nodo principal, y al final decime cómo verificar que el nodo aparece y funciona en N8N.`;
+
+  /* ===== COPY PROMPT ===== */
+  function copyPrompt() {
+    const btn = document.getElementById('copyPromptBtn');
+    writeToClipboard(PROMPT_TEXT, btn, '✅ ¡Copiado!', '📋 Copiar Prompt');
+  }
+
+  /* ===== COPY CODE BLOCK ===== */
+  function copyCode(btn) {
+    const pre = btn.closest('.code-wrapper').querySelector('pre');
+    const text = pre ? pre.innerText : '';
+    writeToClipboard(text, btn, '✅ Copiado', '📋 Copiar');
+  }
+
+  /* ===== CLIPBOARD HELPER ===== */
+  function writeToClipboard(text, btn, successLabel, defaultLabel) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => flashBtn(btn, successLabel, defaultLabel))
+        .catch(() => fallbackCopy(text, btn, successLabel, defaultLabel));
+    } else {
+      fallbackCopy(text, btn, successLabel, defaultLabel);
+    }
+  }
+
+  function fallbackCopy(text, btn, successLabel, defaultLabel) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashBtn(btn, successLabel, defaultLabel);
+    } catch (e) {
+      console.error('Copy failed:', e);
+    }
+  }
+
+  function flashBtn(btn, successLabel, defaultLabel) {
+    btn.textContent = successLabel;
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = defaultLabel;
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+
+  /* ===== SIDEBAR MOBILE TOGGLE ===== */
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+  }
+
+  /* ===== ACTIVE SIDEBAR LINK ON SCROLL ===== */
+  (function() {
+    const sections = document.querySelectorAll('section[id], div[id="intro"]');
+    const links = document.querySelectorAll('.sidebar a');
+
+    function onScroll() {
+      let current = '';
+      const scrollY = window.scrollY + 100;
+      sections.forEach(sec => {
+        if (sec.offsetTop <= scrollY) current = sec.id;
+      });
+      links.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // Close sidebar on link click (mobile)
+    links.forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+      });
+    });
+  })();
+</script>
+</body>
+</html>
