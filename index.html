@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nodo Personalizado N8N con IA</title>
+  <title>Nodo Personalizado n8n con IA</title>
   <style>
     /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -442,7 +442,7 @@
 <header>
   <a href="#intro" class="header-logo">
     <div class="logo-icon">N</div>
-    <span>N8N Custom Node</span>
+    <span>n8n Custom Node</span>
   </a>
   <span class="header-subtitle">Guía con IA</span>
   <button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">☰</button>
@@ -468,8 +468,8 @@
 
     <!-- HERO -->
     <div class="hero" id="intro">
-      <div class="hero-badge">🔌 Community Nodes · N8N</div>
-      <h1>Construí tu <span>nodo personalizado</span><br>en N8N con IA</h1>
+      <div class="hero-badge">🔌 Community Nodes · n8n</div>
+      <h1>Construí tu <span>nodo personalizado</span><br>en n8n con IA</h1>
       <p>
         No necesitás saber TypeScript de antemano. La IA genera el código.
         Tu trabajo es entender qué querés conectar y cómo responde tu API.
@@ -505,7 +505,7 @@
 npm -v</code></pre>
       </div>
 
-      <h3>2. Instalar N8N localmente</h3>
+      <h3>2. Instalar n8n localmente</h3>
 
       <div class="code-wrapper">
         <div class="code-header">
@@ -522,7 +522,7 @@ n8n start</code></pre>
         <span class="callout-icon">⚠️</span>
         <div class="callout-body">
           <strong>PC corporativa con certificados SSL propios</strong>
-          Si usás una PC corporativa, arrancá N8N así:
+          Si usás una PC corporativa, arrancá n8n así:
           <div class="code-wrapper" style="margin-top: 10px;">
             <div class="code-header">
               <span class="code-lang">bash</span>
@@ -673,7 +673,7 @@ n8n start</code></pre>
         <div class="prompt-box-header">
           <div class="prompt-box-title">
             <span class="icon">🤖</span>
-            Prompt completo para N8N Custom Node
+            Prompt completo para n8n Custom Node
           </div>
           <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
             <button class="copy-prompt-btn" id="copyPromptBtn" onclick="copyPrompt()">
@@ -810,7 +810,7 @@ Por favor generá todos los archivos con el código completo, explicá brevement
         </div>
         <div class="step-card">
           <div class="step-num">4</div>
-          <div>Si el nodo no aparece en N8N → le pedís que revise el <code>package.json</code> (el campo <code>n8n.nodes</code> debe estar)</div>
+          <div>Si el nodo no aparece en n8n → le pedís que revise el <code>package.json</code> (el campo <code>n8n.nodes</code> debe estar)</div>
         </div>
         <div class="step-card">
           <div class="step-num">5</div>
@@ -844,11 +844,11 @@ Por favor generá todos los archivos con el código completo, explicá brevement
 npm install
 npm run build
 
-# Instalar en N8N local
+# Instalar en n8n local
 cd ~/.n8n/custom/
 npm install /ruta/completa/a/tu-nodo/
 
-# Reiniciar N8N
+# Reiniciar n8n
 n8n start</code></pre>
       </div>
 
@@ -869,7 +869,7 @@ n8n start</code></pre>
         </div>
         <div class="card">
           <h3 style="margin-top:0; color:#ffab00;">⚙️ Causa</h3>
-          <p style="color:var(--text-muted); margin:0;">Un bug en N8N 2.x con el sistema de Credentials cuando el nodo intenta acceder a ellas.</p>
+          <p style="color:var(--text-muted); margin:0;">Un bug en n8n 2.x con el sistema de Credentials cuando el nodo intenta acceder a ellas.</p>
         </div>
       </div>
 
@@ -877,7 +877,7 @@ n8n start</code></pre>
         <span class="callout-icon">✅</span>
         <div class="callout-body">
           <strong>Solución</strong>
-          No usar Credentials de N8N. En cambio, agregar el API Key directamente como parámetro del nodo con <code>typeOptions: { password: true }</code> — el valor queda enmascarado en la UI pero se puede ingresar sin problema.
+          No usar Credentials de n8n. En cambio, agregar el API Key directamente como parámetro del nodo con <code>typeOptions: { password: true }</code> — el valor queda enmascarado en la UI pero se puede ingresar sin problema.
           <br><br>
           <strong>El prompt ya incluye esta instrucción.</strong> No necesitás hacer nada extra.
         </div>
@@ -898,7 +898,7 @@ n8n start</code></pre>
 <footer>
   <div class="footer-left">
     Creado con ❤️ por <a href="https://github.com/Mauroquil-bit" target="_blank" rel="noopener">Mauroquil-bit</a><br>
-    <span style="font-size:0.8rem;">Guía práctica para construir nodos N8N con ayuda de IAs</span>
+    <span style="font-size:0.8rem;">Guía práctica para construir nodos n8n con ayuda de IAs</span>
   </div>
   <div class="footer-right">
     <a href="https://github.com/Mauroquil-bit/n8n_nodo_personalizado" target="_blank" rel="noopener">
